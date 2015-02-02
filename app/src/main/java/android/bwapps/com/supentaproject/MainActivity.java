@@ -1,11 +1,19 @@
 package android.bwapps.com.supentaproject;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.app.NotificationCompat;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 
 public class MainActivity extends Activity
@@ -20,6 +28,9 @@ public class MainActivity extends Activity
 
     private int installAmountInt = 0;
     private int uninstallAmountInt = 0;
+
+    // intent for when application has been installed
+    private IntentFilter monitorAppFilter = new IntentFilter();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -38,12 +49,23 @@ public class MainActivity extends Activity
         installAmountText.setText(String.valueOf(installAmountInt));
         uninstallAmountText.setText(String.valueOf(uninstallAmountInt));
 
-        monitorApps();
-    }
+        BroadcastReceiver receiver = new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                Toast.makeText(getBaseContext(),
+                        "An Application has been installed!",
+                        Toast.LENGTH_LONG).show();
+            }
+        };
 
-    private void monitorApps()
-    {
-
+        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
+        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
+        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
+        monitorAppFilter.addDataScheme("package");
+        registerReceiver(receiver, monitorAppFilter);
     }
 
     public void onServiceClick(View view)
@@ -57,7 +79,6 @@ public class MainActivity extends Activity
             // Buttons text is changed giving the user the option to stop
             serviceButton.setText(R.string.button_text_stop);
             view.setTag(0);
-
         }
         else
         {
