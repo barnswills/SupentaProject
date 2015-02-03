@@ -5,6 +5,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -46,40 +47,48 @@ public class MainActivity extends Activity
         installAmountText.setText(String.valueOf(installAmountInt));
         uninstallAmountText.setText(String.valueOf(uninstallAmountInt));
 
+        final Outcome outcome = new Outcome();
+
         final BroadcastReceiver receiver = new BroadcastReceiver()
         {
-            Outcome outcome = new Outcome();
-
             @Override
             public void onReceive(Context context, Intent intent)
             {
+                Uri uri = intent.getData();
+                String appName = uri.getEncodedSchemeSpecificPart();
+                outcome.SetAppNameString(appName);
+
                 if(intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED))
                 {
-                    outcome.SetOutcome("installed");
+                    outcome.SetOutcomeString("installed");
                 }
 
                 if(intent.getAction().equals(Intent.ACTION_PACKAGE_CHANGED))
                 {
-                    outcome.SetOutcome("updated");
+                    outcome.SetOutcomeString("updated");
                 }
 
                 if(intent.getAction().equals(Intent.ACTION_PACKAGE_REMOVED))
                 {
-                    outcome.SetOutcome("uninstalled");
+                    outcome.SetOutcomeString("uninstalled");
                 }
 
                 Toast.makeText(getBaseContext(),
-                        "An Application has been " + outcome.GetOutcome(),
+                        outcome.GetAppNameString() + " has been "
+                        + outcome.GetOutcomeString(),
                         Toast.LENGTH_LONG).show();
             }
         };
 
+        // necessary intents added to the intent filter
         monitorAppFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
         monitorAppFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
         monitorAppFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
         monitorAppFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
         monitorAppFilter.addDataScheme("package");
         registerReceiver(receiver, monitorAppFilter);
+
+        // for info on services - https://www.youtube.com/watch?v=GAOH7XTW7BU
     }
 
     public void onServiceClick(View view)
