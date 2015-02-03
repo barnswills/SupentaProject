@@ -33,6 +33,7 @@ public class MainActivity extends Activity
     protected void onResume()
     {
         activityLog.setText(alertService.logString);
+
         super.onResume();
     }
 
@@ -46,12 +47,16 @@ public class MainActivity extends Activity
             stopService(new Intent(getBaseContext(), AlertService.class));
             activityLog.setText("");
             alertService.logString = "";
+            alertService.isServiceRunning = false;
             view.setTag(0);
         }
         else
         {
             serviceButton.setText(R.string.button_text_stop);
             startService(new Intent(getBaseContext(), AlertService.class));
+
+            activityLog.setText(alertService.logString);
+            alertService.isServiceRunning = true;
             view.setTag(1);
         }
     }

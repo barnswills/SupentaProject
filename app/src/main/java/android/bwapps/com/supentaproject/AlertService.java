@@ -1,21 +1,22 @@
 package android.bwapps.com.supentaproject;
 
+import android.app.ActivityManager;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.Uri;
+import android.os.Handler;
 import android.os.IBinder;
 import android.widget.Toast;
 
 public class AlertService extends Service
 {
     static String logString = "";
+    static boolean isServiceRunning = true;
 
-    public AlertService()
-    {
-    }
+    Handler handler = new Handler();
 
     @Override
     public IBinder onBind(Intent intent)
@@ -77,7 +78,40 @@ public class AlertService extends Service
         monitorAppFilter.addDataScheme("package");
         registerReceiver(receiver, monitorAppFilter);
 
+        new Thread(new Runnable() {
+            @Override
+            public void run()
+            {
+                while (isServiceRunning)
+                {
+                    try
+                    {
+                        Thread.sleep(30000);
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run()
+                            {
+                                CheckRAM();
+                            }
+                        });
+                    } catch (Exception e) { e.getStackTrace(); }
+                }
+            }
+        }).start();
+
         return START_STICKY;
+    }
+
+    public void CheckRAM()
+    {
+        ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
+        ActivityManager activityManager = (ActivityManager)getSystemService(ACTIVITY_SERVICE);
+
+        activityManager.getMemoryInfo(memoryInfo);
+        long availableRAM = memoryInfo.availMem / 1048576L;
+
+        Toast.makeText(this, "Available RAM: " + availableRAM + "MB", Toast.LENGTH_LONG).show();
+        logString += "Available RAM: " + availableRAM + "MB\n";
     }
 
     @Override
