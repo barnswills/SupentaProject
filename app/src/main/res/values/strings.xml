@@ -11,5 +11,6 @@
     <string name="button_text_stop">Stop Service</string>
     <string name="show_alert_button">Show Activity Log</string>
     <string name="activity_log_string">Activity Log...</string>
+    <string name="show_activity_log">Show Activity Log</string>
 
 </resources>

@@ -1,34 +1,19 @@
 package android.bwapps.com.supentaproject;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-
 
 public class MainActivity extends Activity
 {
     private Button serviceButton;
-    private boolean hasStarted = false;
 
-    private ListView activityList;
+    public TextView activityLog;
 
-    private TextView installAmountText;
-    private TextView uninstallAmountText;
-
-    private int installAmountInt = 0;
-    private int uninstallAmountInt = 0;
-
-    // intent for when application has been installed
-    private IntentFilter monitorAppFilter = new IntentFilter();
+    AlertService alertService = new AlertService();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -39,56 +24,16 @@ public class MainActivity extends Activity
         serviceButton = (Button) findViewById(R.id.service_button);
         serviceButton.setTag(1);
 
-        activityList = (ListView) findViewById(R.id.activity_list);
+        startService(new Intent(getBaseContext(), AlertService.class));
 
-        installAmountText = (TextView) findViewById(R.id.apps_installed_amount);
-        uninstallAmountText = (TextView) findViewById(R.id.apps_uninstalled_amount);
+        activityLog = (TextView)findViewById(R.id.activity_log);
+    }
 
-        installAmountText.setText(String.valueOf(installAmountInt));
-        uninstallAmountText.setText(String.valueOf(uninstallAmountInt));
-
-        final Outcome outcome = new Outcome();
-
-        final BroadcastReceiver receiver = new BroadcastReceiver()
-        {
-            @Override
-            public void onReceive(Context context, Intent intent)
-            {
-                Uri uri = intent.getData();
-                String appName = uri.getEncodedSchemeSpecificPart();
-                outcome.SetAppNameString(appName);
-
-                if(intent.getAction().equals(Intent.ACTION_PACKAGE_ADDED))
-                {
-                    outcome.SetOutcomeString("installed");
-                }
-
-                if(intent.getAction().equals(Intent.ACTION_PACKAGE_CHANGED))
-                {
-                    outcome.SetOutcomeString("updated");
-                }
-
-                if(intent.getAction().equals(Intent.ACTION_PACKAGE_REMOVED))
-                {
-                    outcome.SetOutcomeString("uninstalled");
-                }
-
-                Toast.makeText(getBaseContext(),
-                        outcome.GetAppNameString() + " has been "
-                        + outcome.GetOutcomeString(),
-                        Toast.LENGTH_LONG).show();
-            }
-        };
-
-        // necessary intents added to the intent filter
-        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_ADDED);
-        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_CHANGED);
-        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_REMOVED);
-        monitorAppFilter.addAction(Intent.ACTION_PACKAGE_REPLACED);
-        monitorAppFilter.addDataScheme("package");
-        registerReceiver(receiver, monitorAppFilter);
-
-        // for info on services - https://www.youtube.com/watch?v=GAOH7XTW7BU
+    @Override
+    protected void onResume()
+    {
+        activityLog.setText(alertService.logString);
+        super.onResume();
     }
 
     public void onServiceClick(View view)
@@ -97,18 +42,16 @@ public class MainActivity extends Activity
 
         if (status == 1)
         {
-            // Service will start when button is clicked
-            hasStarted = true;
-            // Buttons text is changed giving the user the option to stop
-            serviceButton.setText(R.string.button_text_stop);
+            serviceButton.setText(R.string.button_text_start);
+            stopService(new Intent(getBaseContext(), AlertService.class));
+            activityLog.setText("");
+            alertService.logString = "";
             view.setTag(0);
         }
         else
         {
-            // Service will stop when button is clicked
-            hasStarted = false;
-            // Buttons text is changed giving the user the option to start
-            serviceButton.setText(R.string.button_text_start);
+            serviceButton.setText(R.string.button_text_stop);
+            startService(new Intent(getBaseContext(), AlertService.class));
             view.setTag(1);
         }
     }
